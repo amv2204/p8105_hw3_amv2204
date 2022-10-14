@@ -55,7 +55,9 @@ accel = read_csv("./accel_data.csv") %>%
 accel
 ```
 
+Description of dataset:
 
+This dataset has 6 variable (`ncol(accel)`); week, day, and day_id were from the original file untouched besides cleaning up the names using `janitor::clean_names()` but the other 3 (minute, activity_count, and day_type) are new variables created using `pivot_longer` and `mutate`. This dataset has 50,400 observations, found using `nrow(accel)`.
 
 
 
