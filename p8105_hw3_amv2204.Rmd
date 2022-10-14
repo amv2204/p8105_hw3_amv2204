@@ -50,7 +50,8 @@ accel = read_csv("./accel_data.csv") %>%
                               if_else(day == "Sunday", "weekend", "weekday"))) %>%
     mutate(day = as.factor(day)) %>% 
     mutate(minute = as.numeric(minute)) %>% 
-    mutate(day_type = as.factor(day_type))
+    mutate(day_type = as.factor(day_type)) %>% 
+    mutate(day = fct_relevel(day, "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
 
 accel
 ```
@@ -63,14 +64,14 @@ This dataset has 6 variable (`ncol(accel)`); week, day, and day_id were from the
 Let's now make a new variable that is the total activity count for a given day and show it in a table:
 
 ```{r total_activity}
-accel <- accel %>% 
+accel2 <- accel %>% 
   group_by(week, day) %>% 
-  mutate(total_activity = sum(activity_count)) %>% 
-  
-  select(week, day, total_activity) %>% 
+  summarize(total_activity = sum(activity_count)) %>% 
   pivot_wider(
-    names_from = week,
+    names_from = day,
     values_from = total_activity)
+
+accel2
 ```
 
 
