@@ -58,7 +58,7 @@ accel
 
 Description of dataset:
 
-This dataset has 6 variable (`ncol(accel)`); week, day, and day_id were from the original file untouched besides cleaning up the names using `janitor::clean_names()` but the other 3 (minute, activity_count, and day_type) are new variables created using `pivot_longer` and `mutate`. This dataset has 50,400 observations, found using `nrow(accel)`.
+This dataset has 6 variable (`ncol(accel)`); `week`, `day`, and `day_id` were from the original file untouched besides cleaning up the names using `janitor::clean_names()` but the other 3 (`minute,` `activity_count`, and `day_type`) are new variables created using `pivot_longer` and `mutate`. This dataset has 50,400 observations, found using `nrow(accel)`.
 
 
 Let's now make a new variable that is the total activity count for a given day and show it in a table:
@@ -103,25 +103,28 @@ The dataset has 7 variables (`ncol(ny_noaa)`) and 2595176 observations (`nrow(ny
 Let's now do some data cleaning of this dataset:
 
 ```{r}
-ny_noaa_samp = 
+set.seed(100)
+ny_noaa_samp1 = 
   ny_noaa %>% 
   sample_n(2000) %>% 
   janitor::clean_names() %>%
   separate(date, sep = "-", into = c("year", "month", "day")) %>%
-  mutate_at(c(2:9), as.numeric)
-
-
-ny_noaa_samp
+  mutate_at(c(2:9), as.numeric) %>% 
+  mutate(prcp = prcp/10) %>% 
+  mutate(tmin = tmin/10, tmax = tmax/10)
+ny_noaa_samp1
 ```
 
-Real code
+We cleaned up the data by cleaning the names, separating the variable for date of observation into the year, month, and day, converting all the variables except the ID into a numeric variable, and converting the `prcp`, `tmix`, and `tmax` variables from it's tenths value to it's whole value by dividing by 10.  
+
+
+
+
+
+Code with full dataset to add at end:
 
 
 ny_noaa_clean <- ny_noaa %>% 
   janitor::clean_names() %>%
   separate(date, sep = "-", into = c("year", "month", "day")) 
   
-
-
-
-
