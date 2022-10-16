@@ -1,7 +1,7 @@
 ---
 title: "Homework 3"
 author: "Ashwini Varghese"
-date: "2022-10-15"
+date: "2022-10-17"
 output: github_document
 editor_options: 
   chunk_output_type: console
@@ -37,7 +37,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 Let's load, tidy, and wrangling this dataset:
 
-```{r clean}
+```{r accel_cleaning}
 accel = read_csv("./accel_data.csv") %>% 
     janitor::clean_names() %>% 
     pivot_longer(
@@ -79,7 +79,7 @@ From this table, it is hard to determine if any trends are apparent over the day
 
 So let's then make a single panel that shows the 24-hour activity time courses for each day:
 
-```{r}
+```{r accel_plot}
 accel %>%
   ggplot(aes(x = minute, y = activity_count, color = day)) +
   geom_point(aes(alpha = .5)) 
@@ -91,7 +91,7 @@ From this graph, we can see that the activity counts throughout any given day ar
 
 Let's load the data:
 
-```{r}
+```{r load_nynoaa}
 library(p8105.datasets)
 data("ny_noaa")
 
@@ -102,7 +102,7 @@ The dataset has 7 variables (`ncol(ny_noaa)`) and 2595176 observations (`nrow(ny
 
 Let's now do some data cleaning of this dataset:
 
-```{r}
+```{r clean_nynoaa}
 set.seed(100)
 ny_noaa_samp1 = 
   ny_noaa %>% 
@@ -117,12 +117,24 @@ ny_noaa_samp1
 
 We cleaned up the data by cleaning the names, separating the variable for date of observation into the year, month, and day, converting all the variables except the ID into a numeric variable, and converting the `prcp`, `tmix`, and `tmax` variables from it's tenths value to it's whole value by dividing by 10.  
 
+We will next find the most commonly observed value for `snowfall` using the `count` and `order` functions. 
 
+```{r snowfall}
+
+snow_df <- ny_noaa %>% 
+  count(snow, name = "n_obs")
+  
+snow_df <- snow_df[order(-snow_df$n_obs),] %>% 
+  knitr::kable(digits = 1)
+
+snow_df #Should kable this??
+```
+
+We can see from the resulting table that the most observed value for `snowfall` is 0 mm. After that, we have 25 mm and the third highest value is 13 mm. These are the highest values maybe because the observations in this dataset were collected from weather stations in New York state and for a majority of the year, the weather is not optimal for snow.
 
 
 
 Code with full dataset to add at end:
-
 
 ny_noaa_clean <- ny_noaa %>% 
   janitor::clean_names() %>%
