@@ -104,15 +104,16 @@ Let's now do some data cleaning of this dataset:
 
 ```{r clean_nynoaa}
 set.seed(100)
-ny_noaa_samp1 = 
+ny_noaa_samp = 
   ny_noaa %>% 
   sample_n(2000) %>% 
   janitor::clean_names() %>%
   separate(date, sep = "-", into = c("year", "month", "day")) %>%
   mutate_at(c(2:9), as.numeric) %>% 
   mutate(prcp = prcp/10) %>% 
-  mutate(tmin = tmin/10, tmax = tmax/10)
-ny_noaa_samp1
+  mutate(tmin = tmin/10, tmax = tmax/10) %>% 
+  mutate(month = month.name[as.numeric(month)])
+ny_noaa_samp
 ```
 
 We cleaned up the data by cleaning the names, separating the variable for date of observation into the year, month, and day, converting all the variables except the ID into a numeric variable, and converting the `prcp`, `tmix`, and `tmax` variables from it's tenths value to it's whole value by dividing by 10.  
@@ -131,6 +132,33 @@ snow_df #Should kable this??
 ```
 
 We can see from the resulting table that the most observed value for `snowfall` is 0 mm. After that, we have 25 mm and the third highest value is 13 mm. These are the highest values maybe because the observations in this dataset were collected from weather stations in New York state and for a majority of the year, the weather is not optimal for snow.
+
+Now let's make a two-panel plot showing the average max temperature in January and in July in each station across years.
+
+```{r two_plot}
+avg <- ny_noaa_samp %>% 
+  filter(
+    month %in% c("January", "July")
+  ) %>% 
+  drop_na(tmax) %>% 
+  group_by(year, id, month) %>% 
+  summarize(
+    avg_tmax = mean(tmax, na.rm = TRUE)
+  ) %>%
+  ggplot(aes(x = year, y = avg_tmax, group = id)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(. ~ month) +
+  theme(legend.position = "none")
+  
+```
+
+
+
+
+
+
+
 
 
 
