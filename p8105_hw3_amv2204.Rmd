@@ -11,10 +11,16 @@ editor_options:
 
 ```{r setup, include = FALSE}
 library(tidyverse)
+library(p8105.datasets)
+library(hexbin)
+library(ggridges)
+library(patchwork)
 
 knitr::opts_chunk$set(
-  fig.width = 6,
-  fig.asp = .6,
+  echo = TRUE,
+  warning = FALSE,
+  fig.width = 8,
+  fig.height = 6,
   out.width = "90%"
 )
 
@@ -25,7 +31,7 @@ options(
   ggplot2.continuous.fill = "viridis"
 )
 
-scale_color_discrete = scale_color_viridis_d
+scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
@@ -97,26 +103,24 @@ From this graph, we can see that the activity counts throughout any given day ar
 Let's load the data:
 
 ```{r load_nynoaa}
-library(p8105.datasets)
 data("ny_noaa")
 
 ny_noaa
 ```
 
-The dataset has 7 variables (`ncol(ny_noaa)`) and 2595176 observations (`nrow(ny_noaa)`). It has a combination of integer and character variables, with also a date variable. The variables that make up the dataset are an ID variable of the weather station, date of observation, precipitation (mm), snowfall (mm), snow depth (mm), and the maximum and minimum temperatures in Celsius. There is a large number of missing data because each weather station may collect only a subset of these variables, so the dataset has observations with missing data. 
+The dataset has 7 variables (`ncol(ny_noaa)`) and 2,595,176 observations (`nrow(ny_noaa)`). It has a combination of integer and character variables, with also a date variable. The variables that make up the dataset are an ID variable of the weather station, date of observation, precipitation (mm), snowfall (mm), snow depth (mm), and the maximum and minimum temperatures in Celsius. There is a large number of missing data because each weather station may collect only a subset of these variables, so the dataset has observations with missing data. 
 
 Let's now do some data cleaning of this dataset:
 
 ```{r clean_nynoaa}
-set.seed(100)
-ny_noaa_samp = ny_noaa %>% sample_n(2000) %>% 
+ny_noaa_clean <- ny_noaa %>% 
   janitor::clean_names() %>%
   separate(date, sep = "-", into = c("year", "month", "day")) %>%
   mutate_at(c(2:9), as.numeric) %>% 
   mutate(prcp = prcp/10) %>% 
   mutate(tmin = tmin/10, tmax = tmax/10) %>% 
   mutate(month = month.name[as.numeric(month)])
-ny_noaa_samp
+ny_noaa_clean
 ```
 
 We cleaned up the data by cleaning the names, separating the variable for date of observation into the year, month, and day, converting all the variables except the ID into a numeric variable, and converting the `prcp`, `tmix`, and `tmax` variables from it's tenths value to it's whole value by dividing by 10.  
@@ -125,13 +129,13 @@ We will next find the most commonly observed value for `snowfall` using the `cou
 
 ```{r snowfall}
 
-snow_df <- ny_noaa %>% 
+snowfall <- ny_noaa_clean %>% 
   count(snow, name = "n_obs")
   
-snow_df <- snow_df[order(-snow_df$n_obs),] %>% 
+snowfall <- snowfall[order(-snowfall$n_obs),] %>% 
   knitr::kable(digits = 1)
 
-snow_df #Should kable this??
+snowfall
 ```
 
 We can see from the resulting table that the most observed value for `snowfall` is 0 mm. After that, we have 25 mm and the third highest value is 13 mm. These are the highest values maybe because the observations in this dataset were collected from weather stations in New York state and for a majority of the year, the weather is not optimal for snow.
@@ -139,7 +143,7 @@ We can see from the resulting table that the most observed value for `snowfall` 
 Now let's make a two-panel plot showing the average max temperature in January and in July in each station across years.
 
 ```{r two_plot}
-avg <- ny_noaa_samp %>% 
+avgtmax <- ny_noaa_clean %>% 
   filter(
     month %in% c("January", "July")
   ) %>% 
@@ -149,8 +153,9 @@ avg <- ny_noaa_samp %>%
     avg_tmax = mean(tmax, na.rm = TRUE)
   ) 
 
-ggplot(avg, (aes(x = year, y = avg_tmax, group = id, color = id))) +
+ggplot(avgtmax, (aes(x = year, y = avg_tmax, color = id))) +
   geom_point() +
+  geom_line() +
   labs(
     title = "Average maximum temperature vs. year by weather station in January and July",
     x = "Year",
@@ -161,13 +166,15 @@ ggplot(avg, (aes(x = year, y = avg_tmax, group = id, color = id))) +
 
 ```
 
+The overall trends in these graphs are that in January, the average maximum temperature from 1980 to 2010 was between -10 and 10 degrees Celsius. We have a few outliers at about 11, -9, -13, and -12. In July, the average maximum temperature from 1980 to 2010 was between 20 and 35 degrees Celsius. Some of the outliers were 14, 18, 19, and 36.  
+
+
 Now let's make a two-panel plot showing (i) tmax vs tmin for the full dataset and (ii) the distribution of snowfall values greater than 0 and less than 100 separately by year
 
 ```{r diff_two_plot}
 
-library(hexbin)
-snow_plot = 
-ny_noaa_samp %>% 
+temp_plot = 
+ny_noaa_clean %>% 
 ggplot(aes(x = tmin, y = tmax)) +
   geom_hex() +
     labs(
@@ -176,31 +183,24 @@ ggplot(aes(x = tmin, y = tmax)) +
     y = "Maximum temperature (C)"
     )
 
-snow <- ny_noaa_samp %>% 
-  filter(0 < snow & snow < 100) %>%
-  mutate(snow = as.factor(snow)) %>%
+
+snow <- ny_noaa_clean %>% 
+  filter(snow > 0 & snow < 100) %>%
+  mutate(snow = as.numeric(snow)) %>%
   mutate(year = as.factor(year))
 
-year_plot =   
-ggplot(snow, aes(x = year, y = snow)) +
-  geom_violin(aes(fill = year, alpha = .5)) +
+snow_plot =   
+ggplot(snow, aes(x = snow, y = year)) +
+  geom_density_ridges() +
   labs(
     title = "Snowfall values by year",
-    x = "Year",
-    y = "Snowfall (mm)"
+    x = "Snowfall (mm)",
+    y = "Year"
     )
 
-library(patchwork)
-snow_plot / year_plot
+temp_plot + snow_plot
   
 ```
 
-
-
-
-Code with full dataset to add at end:
-
-ny_noaa_clean <- ny_noaa %>% 
-  janitor::clean_names() %>%
-  separate(date, sep = "-", into = c("year", "month", "day")) 
+In these plots, we see that there is large number of days in which the maximum temperature and minimum temperatures were between 15 for tmin and 30 for tmax and -15 for tmin and -5 for tmax. For the snowfall plot, from 1981 to 2010, most of the days with snowfall have a value between 0 and 30 mm. There is also another large set of days that had snowfall values between 40 and 60 mm and another between 70 and 80 mm.
   
