@@ -104,9 +104,7 @@ Let's now do some data cleaning of this dataset:
 
 ```{r clean_nynoaa}
 set.seed(100)
-ny_noaa_samp = 
-  ny_noaa %>% 
-  sample_n(2000) %>% 
+ny_noaa_samp = ny_noaa %>% sample_n(2000) %>% 
   janitor::clean_names() %>%
   separate(date, sep = "-", into = c("year", "month", "day")) %>%
   mutate_at(c(2:9), as.numeric) %>% 
@@ -144,20 +142,53 @@ avg <- ny_noaa_samp %>%
   group_by(year, id, month) %>% 
   summarize(
     avg_tmax = mean(tmax, na.rm = TRUE)
-  ) %>%
-  ggplot(aes(x = year, y = avg_tmax, group = id)) +
-  geom_line() +
+  ) 
+
+ggplot(avg, (aes(x = year, y = avg_tmax, group = id, color = id))) +
   geom_point() +
+  labs(
+    title = "Average maximum temperature vs. year by weather station in January and July",
+    x = "Year",
+    y = "Average maximum temperature (C)"
+  ) +
   facet_grid(. ~ month) +
   theme(legend.position = "none")
-  
+
 ```
 
+Now let's make a two-panel plot showing (i) tmax vs tmin for the full dataset and (ii) the distribution of snowfall values greater than 0 and less than 100 separately by year
 
+```{r diff_two_plot}
 
+library(hexbin)
+snow_plot = 
+ny_noaa_samp %>% 
+ggplot(aes(x = tmin, y = tmax)) +
+  geom_hex() +
+    labs(
+    title = "Minimum and maximum temperatures",
+    x = "Minimum temperature (C)",
+    y = "Maximum temperature (C)"
+    )
 
+snow <- ny_noaa_samp %>% 
+  filter(0 < snow & snow < 100) %>%
+  mutate(snow = as.factor(snow)) %>%
+  mutate(year = as.factor(year))
 
+year_plot =   
+ggplot(snow, aes(x = year, y = snow)) +
+  geom_violin(aes(fill = year, alpha = .5)) +
+  labs(
+    title = "Snowfall values by year",
+    x = "Year",
+    y = "Snowfall (mm)"
+    )
 
+library(patchwork)
+snow_plot / year_plot
+  
+```
 
 
 
