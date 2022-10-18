@@ -35,6 +35,8 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
+
+
 ## Problem 1
 
 Let's load the dataset:
@@ -158,6 +160,8 @@ accel %>%
 ```
 
 From this graph, we can see that the activity counts throughout any given day are usually not higher than about 1,875. The exceptions are at about the 400th minute, 560th minute, 650th minute, 1000th minute and 1,250th minute. The days of the week that we see these higher activity counts are on Thursdays, Fridays, Sundays, and Saturdays, respectively. At the 1,250th minute, on various days throughout the week, there is a large activity count. 
+
+
 
 ## Problem 3
 
