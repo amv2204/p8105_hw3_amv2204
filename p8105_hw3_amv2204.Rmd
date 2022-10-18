@@ -37,6 +37,67 @@ scale_fill_discrete = scale_fill_viridis_d
 
 ## Problem 1
 
+Let's load the dataset:
+
+```{r load_instacart}
+data("instacart")
+
+instacart
+```
+
+The dataset has 15 variables and 1,384,617 observations. Key variables include identifiers for user, order, and product; the order in which each product was added to the cart. There are several order-level variables, describing the day and time of the order, and number of days since prior order. Then there are several item-specific variables, describing the product name (e.g. Yogurt, Avocado), department (e.g. dairy and eggs, produce), and aisle (e.g. yogurt, fresh fruits), and whether the item has been ordered by this user in the past. 
+
+To find how many aisles there are as well as which aisles have the most items ordered from we can use the below code:
+
+```{r aisles}
+instacart %>% 
+  summarize(n_distinct(aisle))
+
+instacart %>% 
+  count(aisle) %>% 
+  arrange(desc(n))
+
+```
+
+There are 134 aisles and the aisles where the most food came from are fresh vegetables, fresh fruits, and packaged vegetables and fruits. 
+
+Now we will display these amounts in a plot and show the number of items ordered in each aisle.
+
+```{r aisle_plot}
+instacart %>% 
+  count(aisle) %>% 
+  filter(n > 10000) %>% 
+  mutate(aisle = fct_reorder(aisle, n)) %>% 
+  ggplot(aes(x = aisle, y = n)) + 
+  geom_point() + 
+  labs(title = "Number of items ordered in each aisle") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+Here is a table showing the three most popular items in the following three aisles: baking ingredients, dog food care, packaged vegetables fruits
+
+```{r}
+instacart %>% 
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>%
+  group_by(aisle) %>% 
+  count(product_name) %>% 
+  mutate(rank = min_rank(desc(n))) %>% 
+  filter(rank < 4) %>% 
+  arrange(desc(n)) %>%
+  knitr::kable()
+```
+
+This last table shows the average hour of the day in which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week.
+
+```{r}
+instacart %>%
+  filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>%
+  group_by(product_name, order_dow) %>%
+  summarize(mean_hour = mean(order_hour_of_day)) %>%
+  spread(key = order_dow, value = mean_hour) %>%
+  knitr::kable(digits = 2)
+```
+
 
 
 ## Problem 2
